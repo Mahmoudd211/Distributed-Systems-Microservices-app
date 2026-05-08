@@ -1,0 +1,449 @@
+{
+  "info": {
+    "_postman_id": "homesvc-collection-1",
+    "name": "Home Services Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Scenario 1 — Successful Booking",
+      "item": [
+        {
+          "name": "1 Register Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('customerId', String(j.userId));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testcustomer\",\"password\":\"Pass1234\",\"initialBalance\":500}"
+            },
+            "url": "{{baseAuth}}/register/customer"
+          }
+        },
+        {
+          "name": "2 Register Provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('providerId', String(j.userId));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testprovider\",\"password\":\"Pass1234\",\"professionType\":\"Plumbing\"}"
+            },
+            "url": "{{baseAuth}}/register/provider"
+          }
+        },
+        {
+          "name": "3 Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('adminToken', j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}"
+            },
+            "url": "{{baseAuth}}/login"
+          }
+        },
+        {
+          "name": "4 Login Provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('providerToken', j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testprovider\",\"password\":\"Pass1234\"}"
+            },
+            "url": "{{baseAuth}}/login"
+          }
+        },
+        {
+          "name": "5 Provider Create Offer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = new Date();",
+                  "d.setMonth(d.getMonth() + 1);",
+                  "const iso = d.toISOString().slice(0, 10);",
+                  "pm.variables.set('nextMonth', iso);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "if (j.id) pm.environment.set('offerId', String(j.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"categoryName\":\"Plumbing\",\"price\":150,\"availableDate\":\"{{nextMonth}}\",\"description\":\"Postman offer\"}"
+            },
+            "url": "{{baseOffer}}/offers"
+          }
+        },
+        {
+          "name": "6 Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('customerToken', j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testcustomer\",\"password\":\"Pass1234\"}"
+            },
+            "url": "{{baseAuth}}/login"
+          }
+        },
+        {
+          "name": "7 Browse Plumbing Offers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const arr = pm.response.json();",
+                  "pm.test('Has offers', () => Array.isArray(arr) && arr.length > 0);",
+                  "pm.environment.set('offerId', String(arr[0].id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseOffer}}/offers/category/Plumbing"
+          }
+        },
+        {
+          "name": "8 Create Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "pm.test('CONFIRMED', () => j.status === 'CONFIRMED');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"offerId\": {{offerId}} }"
+            },
+            "url": "{{baseBooking}}/bookings"
+          }
+        },
+        {
+          "name": "9 Sleep 2s (async notifications)",
+          "request": {
+            "method": "GET",
+            "url": "https://postman-echo.com/delay/2"
+          }
+        },
+        {
+          "name": "10 Wallet Balance 350",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.test('Balance 350', () => Number(j.balance) === 350);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseWallet}}/wallet/{{customerId}}"
+          }
+        },
+        {
+          "name": "11 Notifications BOOKING_SUCCESS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const arr = pm.response.json();",
+                  "const ok = arr.some(n => n.type === 'BOOKING_SUCCESS');",
+                  "pm.test('Has BOOKING_SUCCESS', () => ok);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseNotif}}/notifications/{{customerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scenario 2 — Failed Booking (Insufficient Funds)",
+      "item": [
+        {
+          "name": "1 Register Poor Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('poorCustomerId', String(j.userId));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testpoor\",\"password\":\"Pass1234\",\"initialBalance\":50}"
+            },
+            "url": "{{baseAuth}}/register/customer"
+          }
+        },
+        {
+          "name": "2 Provider Create Expensive Offer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = new Date();",
+                  "d.setMonth(d.getMonth() + 1);",
+                  "const iso = d.toISOString().slice(0, 10);",
+                  "pm.variables.set('nextMonth2', iso);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "if (j.id) pm.environment.set('offerId200', String(j.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{providerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"categoryName\":\"Plumbing\",\"price\":200,\"availableDate\":\"{{nextMonth2}}\",\"description\":\"Expensive\"}"
+            },
+            "url": "{{baseOffer}}/offers"
+          }
+        },
+        {
+          "name": "3 Login Poor Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.environment.set('poorCustomerToken', j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"testpoor\",\"password\":\"Pass1234\"}"
+            },
+            "url": "{{baseAuth}}/login"
+          }
+        },
+        {
+          "name": "4 Create Booking (expect REJECTED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.code === 201);",
+                  "const j = pm.response.json();",
+                  "pm.test('REJECTED', () => j.status === 'REJECTED');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{poorCustomerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"offerId\": {{offerId200}} }"
+            },
+            "url": "{{baseBooking}}/bookings"
+          }
+        },
+        {
+          "name": "5 Sleep 2s",
+          "request": {
+            "method": "GET",
+            "url": "https://postman-echo.com/delay/2"
+          }
+        },
+        {
+          "name": "6 Wallet Still 50",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const j = pm.response.json();",
+                  "pm.test('Balance 50', () => Number(j.balance) === 50);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseWallet}}/wallet/{{poorCustomerId}}"
+          }
+        },
+        {
+          "name": "7 Notifications BOOKING_FAILURE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.code === 200);",
+                  "const arr = pm.response.json();",
+                  "const ok = arr.some(n => n.type === 'BOOKING_FAILURE');",
+                  "pm.test('Has BOOKING_FAILURE', () => ok);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{poorCustomerToken}}" }],
+            "url": "{{baseNotif}}/notifications/{{poorCustomerId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
